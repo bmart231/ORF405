@@ -1640,7 +1640,8 @@ Using the browser automation tools (load them first if deferred, via `ToolSearch
 2. Navigate to `http://localhost:4173/ORF405/#/glm` — confirm the IRLS derivation, the worked-example numbers, and the `ResidualComparison` chart render correctly.
 3. Click a pending topic (e.g. "Model Selection & Regularization") in the sidebar — confirm it shows the "Not covered yet" placeholder card and the URL updates to `#/msr`.
 4. Use `resize_window` to test at ~390px width — confirm the sidebar collapses behind the "☰ Topics" button and no horizontal scrollbar appears on the page body.
-5. Check console for errors via `read_console_messages` — expected: no errors.
+5. Eyeball the small metadata text that uses `--ink-faint` (sidebar note, topic-link status labels, code-lang labels, result labels, chart axis labels) in both light and dark mode — Task 3's code review flagged these as computing to a low WCAG contrast ratio (~2.5–2.9:1 against their backgrounds) at 10.5–12px. If it reads as genuinely hard to read (not just a technicality), darken/lighten `--ink-faint` in `tokens.css` accordingly rather than leaving it.
+6. Check console for errors via `read_console_messages` — expected: no errors.
 
 - [ ] **Step 4: Stop the preview server**
 
