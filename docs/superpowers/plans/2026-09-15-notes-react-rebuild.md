@@ -127,11 +127,11 @@ cd ~/ORF405/notes
 npm install
 npm run dev -- --port 5173 &
 sleep 2
-curl -s http://localhost:5173/ | grep -o '<title>[^<]*</title>'
+curl -s http://localhost:5173/ORF405/ | grep -o '<title>[^<]*</title>'
 kill %1
 ```
 
-Expected: `<title>ORF 405 Notes</title>` printed, no errors in between.
+Expected: `<title>ORF 405 Notes</title>` printed, no errors in between. (Note: `vite.config.js` sets `base: '/ORF405/'`, so the dev server serves the app under that path — a bare `curl -s http://localhost:5173/` returns an empty 302 redirect body, not the title.)
 
 - [ ] **Step 8: Commit**
 
