@@ -233,6 +233,8 @@ git add notes/package.json notes/package-lock.json notes/vite.config.js
 git commit -m "Add MDX, KaTeX, and router dependencies"
 ```
 
+**Known dependency advisories (accepted, not blocking):** `npm audit` flags `react-router-dom@6.30.6` for a moderate open-redirect advisory (GHSA-wrjc-x8rr-h8h6) with no patched 6.x release yet (fix requires the breaking 7.x line), and dev-only `esbuild` (via `vite@5.4.x`) for a dev-server request-disclosure issue (GHSA-67mh-4wv8-2f99) that doesn't affect production builds. Accepted for this project: every route and `<Link to=...>` in this app is built from the static `topics` registry, never from user input, so the open-redirect vector has no exploitable path here. Re-check before any future v7 router migration.
+
 ---
 
 ### Task 3: Design tokens and global styles
