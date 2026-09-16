@@ -45,7 +45,7 @@ export default function BiasVarianceCurve() {
         <text x={x(best.h)} y={y(best.mse) - 10} className="chart-label" textAnchor="middle">h* &asymp; {best.h.toFixed(2)}</text>
       </svg>
       <figcaption>
-        <span className="legend-bias">bias&sup2;</span> &middot; <span className="legend-variance">variance</span> &middot; <span className="legend-mse">MSE</span> against bandwidth, for an illustrative $m''(x)$ and design density. The minimum near h&asymp;{best.h.toFixed(2)} is the bias&ndash;variance optimal bandwidth referenced in the text.
+        <span className="legend-bias">bias&sup2;</span> &middot; <span className="legend-variance">variance</span> &middot; <span className="legend-mse">MSE</span> against bandwidth, for an illustrative regression curvature and design density. The minimum near h&asymp;{best.h.toFixed(2)} is the bias&ndash;variance optimal bandwidth referenced in the text.
       </figcaption>
     </figure>
   )
