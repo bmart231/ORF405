@@ -2,9 +2,14 @@
 
 ## Purpose
 
-A course-notes website for Princeton ORF 405 (Regression & Applied Time Series), covering the syllabus topic by topic with textbook/proof-depth explanations. Replaces an earlier single-page Claude Artifact prototype with a proper React site living in this repo, alongside the existing `Homework1/` material (homework stays out of scope for this project — it's tracked separately).
+A course-notes website for Princeton ORF 405 (Regression & Applied Time Series),
+covering the syllabus topic by topic with textbook/proof-depth explanations.
+Replaces an earlier single-page Claude Artifact prototype with a proper React
+site living in this repo, alongside the existing `Homework1/` material (homework
+stays out of scope for this project — it's tracked separately).
 
-The site is for building conceptual understanding, not for homework help. Content is added topic by topic as the course covers it in lecture.
+The site is for building conceptual understanding, not for homework help.
+Content is added topic by topic as the course covers it in lecture.
 
 ## Non-goals
 
@@ -14,13 +19,24 @@ The site is for building conceptual understanding, not for homework help. Conten
 
 ## Architecture
 
-**Stack**: Vite + React (JavaScript, no TypeScript — keeps content files simple to author), MDX for content, `react-router-dom` in hash-routing mode, deployed to GitHub Pages via GitHub Actions.
+**Stack**: Vite + React (JavaScript, no TypeScript — keeps content files simple
+to author), MDX for content, `react-router-dom` in hash-routing mode, deployed
+to GitHub Pages via GitHub Actions.
 
-**Why MDX**: Each topic is authored as near-Markdown prose with embedded custom components (`<Proof>`, `<Result>`, `<Chart>`) for math and code. This keeps the "write a new topic after lecture" workflow lightweight — no hand-written JSX for every paragraph.
+**Why MDX**: Each topic is authored as near-Markdown prose with embedded custom
+components (`<Proof>`, `<Result>`, `<Chart>`) for math and code. This keeps the
+"write a new topic after lecture" workflow lightweight — no hand-written JSX for
+every paragraph.
 
-**Why hash routing**: GitHub Pages project sites (`bmart231.github.io/ORF405`) have no server-side rewrite support. Hash-based routes (`/#/glm`) resolve entirely client-side, so per-topic URLs work without any server configuration.
+**Why hash routing**: GitHub Pages project sites (`bmart231.github.io/ORF405`)
+have no server-side rewrite support. Hash-based routes (`/#/glm`) resolve
+entirely client-side, so per-topic URLs work without any server configuration.
 
-**Why no charting library**: A handful of illustrative plots (bias-variance curve, fitted regression line with residuals) don't justify a dependency like Recharts. Each is a small hand-built inline-SVG React component with real computed data (per the design system: axes at real scale, labeled ticks, theme-aware colors).
+**Why no charting library**: A handful of illustrative plots (bias-variance
+curve, fitted regression line with residuals) don't justify a dependency like
+Recharts. Each is a small hand-built inline-SVG React component with real
+computed data (per the design system: axes at real scale, labeled ticks,
+theme-aware colors).
 
 ## Directory layout
 
@@ -62,24 +78,55 @@ ORF405/
 
 **Written now (expanded from the artifact prototype), textbook/proof depth:**
 
-1. **Multiple & Nonparametric Regression** — motivation, model + Gauss-Markov assumptions, least-squares derivation (normal equations, proof), OLS properties (unbiasedness proof, variance, Gauss-Markov theorem proof), inference (t/F tests), goodness of fit, nonparametric regression (Nadaraya-Watson derivation, local polynomial regression, bias-variance tradeoff, bandwidth selection via CV), plus for this rebuild: a worked numerical example fitting a small synthetic dataset by hand through the normal equations, an inline chart of the bias-variance tradeoff vs. bandwidth, a boundary-bias example motivating local-linear over Nadaraya-Watson, and a short weighted-least-squares subsection (foreshadowing GLM/IRLS). R and Python code snippets.
+1. **Multiple & Nonparametric Regression** — motivation, model + Gauss-Markov
+   assumptions, least-squares derivation (normal equations, proof), OLS
+   properties (unbiasedness proof, variance, Gauss-Markov theorem proof),
+   inference (t/F tests), goodness of fit, nonparametric regression
+   (Nadaraya-Watson derivation, local polynomial regression, bias-variance
+   tradeoff, bandwidth selection via CV), plus for this rebuild: a worked
+   numerical example fitting a small synthetic dataset by hand through the
+   normal equations, an inline chart of the bias-variance tradeoff vs.
+   bandwidth, a boundary-bias example motivating local-linear over
+   Nadaraya-Watson, and a short weighted-least-squares subsection (foreshadowing
+   GLM/IRLS). R and Python code snippets.
 
-2. **Generalized Linear Models** — motivation, exponential family (with derivation of the mean/variance identities from the cumulant function), GLM components, MLE and score equations, IRLS derivation (Fisher scoring, full step-by-step), logistic and Poisson regression as special cases, deviance and model comparison, diagnostics, plus for this rebuild: a worked logistic-regression example with hand-computed IRLS iterations on a tiny dataset, an inline chart comparing raw vs. deviance residuals, and a short quasi-likelihood/overdispersion subsection. R and Python code snippets.
+2. **Generalized Linear Models** — motivation, exponential family (with
+   derivation of the mean/variance identities from the cumulant function), GLM
+   components, MLE and score equations, IRLS derivation (Fisher scoring, full
+   step-by-step), logistic and Poisson regression as special cases, deviance and
+   model comparison, diagnostics, plus for this rebuild: a worked
+   logistic-regression example with hand-computed IRLS iterations on a tiny
+   dataset, an inline chart comparing raw vs. deviance residuals, and a short
+   quasi-likelihood/overdispersion subsection. R and Python code snippets.
 
-**Placeholder now, filled in as lecture covers them:** Model Selection & Regularization, Classification & Supervised Learning, Introduction to Deep Learning, Unsupervised Learning, Stationary Time Series & Martingales, Linear Time Series, Discrete-Time Volatility Models.
+**Placeholder now, filled in as lecture covers them:** Model Selection &
+Regularization, Classification & Supervised Learning, Introduction to Deep
+Learning, Unsupervised Learning, Stationary Time Series & Martingales, Linear
+Time Series, Discrete-Time Volatility Models.
 
 ## Visual design
 
-Carried over from the approved artifact design: paper/ink palette with a Princeton-orange accent, Fraunces (display) + Source Serif 4 (body) + IBM Plex Mono (code/labels), light and dark mode via CSS custom properties, sidebar + single-column reading layout, responsive down to phone width.
+Carried over from the approved artifact design: paper/ink palette with a
+Princeton-orange accent, Fraunces (display) + Source Serif 4 (body) + IBM Plex
+Mono (code/labels), light and dark mode via CSS custom properties, sidebar +
+single-column reading layout, responsive down to phone width.
 
 ## Deployment
 
-GitHub Actions workflow (`.github/workflows/deploy.yml`) triggers on push to `main` affecting `notes/`: installs dependencies, runs `npm run build` in `notes/`, publishes `notes/dist` to the `gh-pages` environment via `actions/deploy-pages`. Live at `https://bmart231.github.io/ORF405/`.
+GitHub Actions workflow (`.github/workflows/deploy.yml`) triggers on push to
+`main` affecting `notes/`: installs dependencies, runs `npm run build` in
+`notes/`, publishes `notes/dist` to the `gh-pages` environment via
+`actions/deploy-pages`. Live at `https://bmart231.github.io/ORF405/`.
 
 ## Update workflow
 
-To add a topic once it's covered in lecture: add `<slug>.mdx` under `notes/src/content/`, register it in `topics.js` with status `"ready"`, remove its placeholder entry. Push to `main`; the site redeploys automatically.
+To add a topic once it's covered in lecture: add `<slug>.mdx` under
+`notes/src/content/`, register it in `topics.js` with status `"ready"`, remove
+its placeholder entry. Push to `main`; the site redeploys automatically.
 
 ## Testing
 
-No automated test suite — this is a static content site with no business logic to unit test. Verification is: `npm run build` succeeds, and the deployed site is checked manually in a browser (routing between topics, math rendering, light/dark mode, phone width).
+No automated test suite — this is a static content site with no business logic
+to unit test. Verification is: `npm run build` succeeds, and the deployed site
+is checked manually in a browser (routing between topics, math rendering,
+light/dark mode, phone width).
