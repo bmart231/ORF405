@@ -1,5 +1,219 @@
+import Proof from '../components/Proof.jsx'
+import Result from '../components/Result.jsx'
+import CodeBlock from '../components/CodeBlock.jsx'
+import BiasVarianceCurve from '../components/charts/BiasVarianceCurve.jsx'
+import FittedLineResiduals from '../components/charts/FittedLineResiduals.jsx'
+
 <p className="eyebrow">TOPIC 01 OF 09</p>
 
 # Multiple & Nonparametric Regression
 
-<p className="dek">Stub — full content added in Task 10.</p>
+<p className="dek">From one predictor to many, then from a fixed functional form to none at all.</p>
+
+## 1. Motivation
+
+Simple linear regression relates a response to a single predictor. Almost nothing in finance is that clean: an asset's excess return depends simultaneously on market risk, size, and value exposure (as in Fama–French); a bond's yield depends on maturity, credit spread, and liquidity together. Multiple regression lets several predictors act jointly. But multiple regression still forces the mean response to be a straight line (or plane) in the predictors. When there's no reason to believe that — a volatility smile, a nonlinear term structure — we let the data pick the shape instead. That's nonparametric regression.
+
+## 2. The Multiple Linear Regression Model
+
+For observations $i=1,\dots,n$ with response $y_i$ and predictors $x_{i1},\dots,x_{ip}$:
+
+$$
+y_i = \beta_0 + \beta_1 x_{i1} + \cdots + \beta_p x_{ip} + \varepsilon_i
+$$
+
+In matrix form, stacking observations, $y = X\beta + \varepsilon$, where $y\in\mathbb{R}^n$, $X$ is the $n\times(p+1)$ design matrix (its first column is all ones, for the intercept), $\beta\in\mathbb{R}^{p+1}$, and $\varepsilon\in\mathbb{R}^n$.
+
+<Result label="Gauss–Markov Assumptions">
+
+**(A1) Linearity** — $E[y\mid X]=X\beta$.
+
+**(A2) Full rank** — $\mathrm{rank}(X)=p+1$, so no predictor is an exact linear combination of the others and $X^\top X$ is invertible.
+
+**(A3) Spherical errors** — $\mathrm{Var}(\varepsilon\mid X)=\sigma^2 I_n$ (homoscedastic, uncorrelated).
+
+**(A4) Normality** (needed only for exact finite-sample inference) — $\varepsilon\mid X\sim N(0,\sigma^2 I_n)$.
+
+</Result>
+
+## 3. Least Squares: Derivation
+
+Choose $\beta$ to minimize the residual sum of squares:
+
+$$
+\mathrm{RSS}(\beta) = (y-X\beta)^\top(y-X\beta) = y^\top y - 2\beta^\top X^\top y + \beta^\top X^\top X \beta
+$$
+
+<Proof label="Derivation">
+
+Differentiate with respect to $\beta$:
+
+$$
+\nabla_\beta\, \mathrm{RSS}(\beta) = -2X^\top y + 2X^\top X\beta
+$$
+
+Setting the gradient to zero gives the *normal equations*, $X^\top X\beta = X^\top y$. By (A2), $X^\top X$ is invertible, so the unique solution is
+
+$$
+\hat\beta = (X^\top X)^{-1}X^\top y
+$$
+
+The Hessian is $2X^\top X \succ 0$, confirming this is the minimizer, not a saddle point.
+
+</Proof>
+
+Geometrically, $\hat y = X\hat\beta = X(X^\top X)^{-1}X^\top y = Hy$ is the orthogonal projection of $y$ onto the column space of $X$. $H$, the *hat matrix*, is symmetric and idempotent ($H^2=H$).
+
+### Worked example
+
+Take three points, $x=(-1,0,1)$ and $y=(0,1,3)$, fit with an intercept and slope. The design matrix and its Gram matrix are
+
+$$
+X=\begin{bmatrix}1&-1\\1&0\\1&1\end{bmatrix},\qquad
+X^\top X=\begin{bmatrix}3&0\\0&2\end{bmatrix},\qquad
+X^\top y=\begin{bmatrix}4\\3\end{bmatrix}
+$$
+
+Since $X^\top X$ is diagonal here, $(X^\top X)^{-1}=\begin{bmatrix}1/3&0\\0&1/2\end{bmatrix}$, so
+
+$$
+\hat\beta = (X^\top X)^{-1}X^\top y = \begin{bmatrix}4/3\\3/2\end{bmatrix}
+$$
+
+i.e. $\hat y = 4/3 + 1.5x$ — the intercept is the mean of $y$ (since $\bar x=0$ makes the columns of $X$ orthogonal) and the slope is exactly $S_{xy}/S_{xx}=3/2$, matching the single-predictor OLS formula as a sanity check.
+
+## 4. Properties of the OLS Estimator
+
+<Proof label="Unbiasedness">
+
+$$
+E[\hat\beta\mid X] = E[(X^\top X)^{-1}X^\top y\mid X] = (X^\top X)^{-1}X^\top E[y\mid X] = (X^\top X)^{-1}X^\top X\beta = \beta
+$$
+
+using (A1) in the third step.
+
+</Proof>
+
+<Proof label="Variance">
+
+$$
+\mathrm{Var}(\hat\beta\mid X) = (X^\top X)^{-1}X^\top \,\mathrm{Var}(y\mid X)\, X(X^\top X)^{-1} = (X^\top X)^{-1}X^\top(\sigma^2 I)X(X^\top X)^{-1} = \sigma^2(X^\top X)^{-1}
+$$
+
+using (A3).
+
+</Proof>
+
+<Result label="Gauss–Markov Theorem">
+
+Under (A1)–(A3), $\hat\beta$ is BLUE: among all linear unbiased estimators $\tilde\beta=Cy$, $\mathrm{Var}(\tilde\beta)-\mathrm{Var}(\hat\beta)$ is positive semi-definite.
+
+</Result>
+
+<Proof label="Proof">
+
+Let $\tilde\beta=Cy$ be linear and unbiased, so $E[Cy\mid X]=CX\beta=\beta$ for all $\beta$, forcing $CX=I$. Write $C=(X^\top X)^{-1}X^\top + D$ for some matrix $D$; unbiasedness of $\tilde\beta$ is then equivalent to $DX=0$. Then
+
+$$
+\mathrm{Var}(\tilde\beta\mid X) = \sigma^2 CC^\top = \sigma^2\big[(X^\top X)^{-1} + DD^\top\big]
+$$
+
+because the cross terms contain $DX=0$ and its transpose. Hence $\mathrm{Var}(\tilde\beta)-\mathrm{Var}(\hat\beta) = \sigma^2 DD^\top$, which is positive semi-definite for any $D$.
+
+</Proof>
+
+### Weighted least squares (a preview of GLM/IRLS)
+
+If $\mathrm{Var}(\varepsilon\mid X)=\sigma^2 \Omega$ for a known, non-identity diagonal $\Omega=\mathrm{diag}(\omega_1,\dots,\omega_n)$ — heteroscedastic but uncorrelated errors — the Gauss–Markov argument above still goes through after rescaling. Minimizing the *weighted* RSS,
+
+$$
+\mathrm{RSS}_W(\beta) = \sum_i \frac{1}{\omega_i}(y_i - x_i^\top\beta)^2 = (y-X\beta)^\top W (y-X\beta), \qquad W=\Omega^{-1}
+$$
+
+gives, by the same derivation as Section 3 with $X^\top X\to X^\top WX$ and $X^\top y \to X^\top Wy$,
+
+$$
+\hat\beta_{WLS} = (X^\top WX)^{-1}X^\top Wy
+$$
+
+which is BLUE under this weighted error structure. This exact weighted normal-equation form reappears in the GLM notes as the inner step of iteratively reweighted least squares — a GLM is, at each iteration, a weighted regression of a "working response" on $X$.
+
+## 5. Inference
+
+Under (A4), $\hat\beta\mid X \sim N\big(\beta,\ \sigma^2(X^\top X)^{-1}\big)$. Replacing the unknown $\sigma^2$ with the unbiased estimator $s^2=\mathrm{RSS}/(n-p-1)$ gives, for each coefficient,
+
+$$
+t_j = \frac{\hat\beta_j-\beta_{j0}}{s\sqrt{[(X^\top X)^{-1}]_{jj}}} \ \sim\ t_{n-p-1} \quad\text{under } H_0:\beta_j=\beta_{j0}
+$$
+
+To test several restrictions jointly — comparing a full model ($p+1$ parameters) to a nested restricted model with $q+1$ parameters, $q$ smaller than $p$ — use
+
+$$
+F = \frac{(\mathrm{RSS}_{\text{restricted}}-\mathrm{RSS}_{\text{full}})/(p-q)}{\mathrm{RSS}_{\text{full}}/(n-p-1)} \ \sim\ F_{p-q,\ n-p-1}
+$$
+
+under the null that the restricted model already holds.
+
+## 6. Goodness of Fit
+
+With $\mathrm{TSS}=\sum_i(y_i-\bar y)^2$, $R^2 = 1-\mathrm{RSS}/\mathrm{TSS}$ always rises as predictors are added, so it can't be used to compare models of different size. The adjusted version corrects for this:
+
+$$
+\bar R^2 = 1 - \frac{\mathrm{RSS}/(n-p-1)}{\mathrm{TSS}/(n-1)}
+$$
+
+<FittedLineResiduals />
+
+## 7. Nonparametric Regression
+
+Now drop the assumption that $E[y\mid x]$ is linear in $x$, and instead let $m(x)=E[y\mid x]$ be an unknown smooth function estimated directly from the data.
+
+<Result label="Nadaraya–Watson (kernel) estimator">
+
+$$
+\hat m_h(x) = \frac{\sum_{i=1}^n K\!\left(\dfrac{x-x_i}{h}\right) y_i}{\sum_{i=1}^n K\!\left(\dfrac{x-x_i}{h}\right)}
+$$
+
+for a kernel $K$ (e.g. Gaussian, Epanechnikov) and bandwidth $h>0$.
+
+</Result>
+
+<Proof label="Where it comes from">
+
+$\hat m_h(x)$ is exactly the value of $c$ that minimizes the *locally weighted* squared error $\sum_i K\!\left(\frac{x-x_i}{h}\right)(y_i-c)^2$ — a local constant fit, weighting nearby points heavily and distant points lightly. Differentiating with respect to $c$ and setting the result to zero recovers the weighted-average formula above.
+
+</Proof>
+
+*Local polynomial regression* generalizes this: at each $x$, fit a degree-$d$ polynomial by weighted least squares, $\min_{\gamma}\sum_i K\!\left(\frac{x-x_i}{h}\right)\Big(y_i-\sum_{j=0}^d \gamma_j(x_i-x)^j\Big)^2$, and set $\hat m(x)=\hat\gamma_0$. Local linear fits ($d=1$) correct much of the Nadaraya–Watson bias near the boundary of the data.
+
+### Boundary bias, worked
+
+Suppose the true $m(x)=x$ (a straight line) and we evaluate near the left boundary of the data, where only points with $x_i\ge x$ fall inside the kernel's support — the neighborhood is one-sided, not symmetric. The Nadaraya–Watson estimator averages $y_i$ over that one-sided neighborhood, so $E[\hat m_h(x)] \ne m(x)$ even as $n\to\infty$ with $h\to0$ slowly enough: the estimator is biased toward the *interior* value of $m$, since it can only average points from one side. Concretely, for $m(x)=x$ evaluated at the boundary with a one-sided uniform kernel of width $h$, $E[\hat m_h(x)]\approx x + h/2$ — an $O(h)$ bias, one order worse than the $O(h^2)$ interior bias. Local *linear* regression removes this: because it fits a line rather than a constant to the one-sided neighborhood, it correctly extrapolates the local slope and the leading bias term vanishes, leaving the same $O(h^2)$ rate as in the interior. This is the standard reason local linear (or higher-order local polynomial) fits are preferred to Nadaraya–Watson near the edges of the data — exactly where a term structure or volatility curve's endpoint often matters most.
+
+<Result label="Bias–variance tradeoff">
+
+For twice-differentiable $m$ and design density $f$, $\mathrm{Bias}[\hat m_h(x)] = O(h^2)$, driven by $m''(x)$, while $\mathrm{Var}[\hat m_h(x)] \approx \dfrac{\sigma^2(x)\,R(K)}{n\,h\,f(x)}$, where $R(K)=\int K(u)^2\,du$. Shrinking $h$ removes bias but leaves fewer effective observations near each $x$, inflating variance; growing $h$ does the opposite. Balancing the two gives an optimal bandwidth $h^\ast \propto n^{-1/5}$ — a slower convergence rate than the $n^{-1/2}$ parametric rate, which is the price of not assuming a functional form.
+
+</Result>
+
+<BiasVarianceCurve />
+
+In practice, $h$ is chosen by leave-one-out cross-validation: minimize $\mathrm{CV}(h)=\frac1n\sum_i\big(y_i-\hat m_{h,-i}(x_i)\big)^2$, where $\hat m_{h,-i}$ is estimated with observation $i$ removed.
+
+## 8. Code
+
+<CodeBlock lang="R">{`fit <- lm(ret ~ mkt + smb + hml, data = ff_data)
+summary(fit)
+
+# local linear (nonparametric) fit of ret on mkt
+library(KernSmooth)
+np_fit <- locpoly(ff_data$mkt, ff_data$ret, degree = 1, bandwidth = 0.05)`}</CodeBlock>
+
+<CodeBlock lang="Python">{`import statsmodels.api as sm
+
+X = sm.add_constant(ff_data[["mkt", "smb", "hml"]])
+fit = sm.OLS(ff_data["ret"], X).fit()
+print(fit.summary())
+
+# local linear (nonparametric) fit of ret on mkt
+smoothed = sm.nonparametric.lowess(ff_data["ret"], ff_data["mkt"], frac=0.2)`}</CodeBlock>
