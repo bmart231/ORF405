@@ -820,7 +820,7 @@ export default function BiasVarianceCurve() {
         <text x={x(best.h)} y={y(best.mse) - 10} className="chart-label" textAnchor="middle">h* &asymp; {best.h.toFixed(2)}</text>
       </svg>
       <figcaption>
-        <span className="legend-bias">bias&sup2;</span> &middot; <span className="legend-variance">variance</span> &middot; <span className="legend-mse">MSE</span> against bandwidth, for an illustrative $m''(x)$ and design density. The minimum near h&asymp;{best.h.toFixed(2)} is the bias&ndash;variance optimal bandwidth referenced in the text.
+        <span className="legend-bias">bias&sup2;</span> &middot; <span className="legend-variance">variance</span> &middot; <span className="legend-mse">MSE</span> against bandwidth, for an illustrative regression curvature and design density. The minimum near h&asymp;{best.h.toFixed(2)} is the bias&ndash;variance optimal bandwidth referenced in the text.
       </figcaption>
     </figure>
   )
@@ -834,6 +834,8 @@ cd ~/ORF405
 git add notes/src/components/charts/BiasVarianceCurve.jsx
 git commit -m "Add BiasVarianceCurve chart component"
 ```
+
+**Note for chart components (Tasks 6-8):** these are plain `.jsx` files, not `.mdx`, so the build's `remark-math`/`rehype-katex` pipeline never touches text inside them — it only transforms raw MDX source at compile time. Any `$...$` LaTeX math syntax written directly in a chart's caption text renders as literal text (dollar signs included), not real math. Use prose or unicode math characters (e.g. `m&Prime;(x)`, `&mu;`) in chart captions instead. (This caption above was originally written with `$m''(x)$` and was caught and fixed by Task 6's code review before merge — Tasks 7 and 8's captions were checked and don't have this problem.)
 
 ---
 
