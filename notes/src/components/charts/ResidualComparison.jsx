@@ -1,5 +1,5 @@
 const DATA = [
-  { y: 0, mu: 0.05 },
+  { y: 1, mu: 0.05 },
   { y: 0, mu: 0.09 },
   { y: 0, mu: 0.14 },
   { y: 1, mu: 0.18 },
@@ -10,7 +10,7 @@ const DATA = [
   { y: 1, mu: 0.63 },
   { y: 1, mu: 0.74 },
   { y: 0, mu: 0.81 },
-  { y: 1, mu: 0.92 },
+  { y: 0, mu: 0.92 },
 ]
 
 function residuals() {
