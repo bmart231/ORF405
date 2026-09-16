@@ -1,5 +1,148 @@
+import Proof from '../components/Proof.jsx'
+import Result from '../components/Result.jsx'
+import CodeBlock from '../components/CodeBlock.jsx'
+import ResidualComparison from '../components/charts/ResidualComparison.jsx'
+
 <p className="eyebrow">TOPIC 02 OF 09</p>
 
 # Generalized Linear Models
 
-<p className="dek">Stub — full content added in Task 11.</p>
+<p className="dek">One framework for binary outcomes, counts, and continuous responses alike.</p>
+
+## 1. Motivation
+
+Linear regression assumes a continuous, unbounded, homoscedastic response. That's the wrong model for a default indicator (bounded in $\{0,1\}$), a trade count (non-negative integer), or claim severity (positive, skewed). GLMs keep the linear predictor but let it drive the mean of *any* exponential-family distribution through a link function.
+
+## 2. The Exponential Family
+
+A response $y$ belongs to the (one-parameter) exponential family if its density or mass function can be written
+
+$$
+f(y;\theta,\phi) = \exp\!\left\{ \frac{y\theta - b(\theta)}{a(\phi)} + c(y,\phi) \right\}
+$$
+
+where $\theta$ is the canonical parameter, $\phi$ a dispersion parameter, and $b(\cdot)$ the cumulant function. Differentiating the (log of the) density's normalization gives two identities used throughout GLM theory:
+
+$$
+E[y]=b'(\theta)=:\mu, \qquad \mathrm{Var}(y)=a(\phi)\,b''(\theta) =: a(\phi)\,V(\mu)
+$$
+
+$V(\mu)$ is the *variance function* — it's what makes the Gaussian, Bernoulli, and Poisson cases behave so differently.
+
+<Result label="Examples">
+
+**Gaussian($\mu,\sigma^2$)**: $\theta=\mu$, $b(\theta)=\theta^2/2$, $a(\phi)=\sigma^2$, $V(\mu)=1$.
+
+**Bernoulli($p$)**: $\theta=\log\frac{p}{1-p}$ (the logit), $b(\theta)=\log(1+e^\theta)$, $a(\phi)=1$, $V(\mu)=\mu(1-\mu)$.
+
+**Poisson($\lambda$)**: $\theta=\log\lambda$, $b(\theta)=e^\theta$, $a(\phi)=1$, $V(\mu)=\mu$.
+
+</Result>
+
+## 3. Components of a GLM
+
+A GLM has three pieces: (1) a **random component** — each $y_i$ drawn independently from an exponential-family distribution with mean $\mu_i$; (2) a **systematic component**, the linear predictor $\eta_i = x_i^\top\beta$; and (3) a **link function** $g$ connecting the two, $g(\mu_i)=\eta_i$. The *canonical link* is $g=(b')^{-1}$, i.e. the choice that makes $\theta_i=\eta_i$ directly — identity for Gaussian, logit for Bernoulli, log for Poisson.
+
+## 4. Maximum Likelihood Estimation
+
+For independent observations, the log-likelihood is $\ell(\beta) = \sum_i \big[y_i\theta_i - b(\theta_i)\big]/a(\phi) + c(y_i,\phi)$, with $\theta_i$ tied to $\beta$ through $\eta_i=x_i^\top\beta$ and $\mu_i=g^{-1}(\eta_i)$. Differentiating via the chain rule $\theta_i\to\mu_i\to\eta_i\to\beta_j$ gives the score equations
+
+$$
+\frac{\partial \ell}{\partial \beta_j} = \sum_i \frac{y_i-\mu_i}{a(\phi)\,V(\mu_i)\,g'(\mu_i)}\, x_{ij} = 0, \qquad j=0,\dots,p
+$$
+
+Because $\mu_i$ depends on $\beta$ nonlinearly through $g$, these equations have no closed-form solution outside the Gaussian/identity-link case — unlike ordinary least squares.
+
+## 5. Iteratively Reweighted Least Squares
+
+The score equations are solved by Fisher scoring, a Newton–Raphson variant that uses the expected (Fisher) information in place of the observed Hessian.
+
+<Proof label="Derivation">
+
+Write $w_i = \big[V(\mu_i)\,g'(\mu_i)^2\big]^{-1}$ (absorbing $a(\phi)$). The score vector and Fisher information have entries
+
+$$
+U_j(\beta)=\sum_i w_i\,g'(\mu_i)\,(y_i-\mu_i)\,x_{ij}, \qquad I_{jk}(\beta)=\sum_i w_i\,x_{ij}x_{ik}
+$$
+
+The Fisher scoring update $\beta^{(t+1)}=\beta^{(t)}+I(\beta^{(t)})^{-1}U(\beta^{(t)})$, rewritten in matrix form and simplified, collapses to a weighted least-squares step,
+
+$$
+\beta^{(t+1)} = \big(X^\top W^{(t)} X\big)^{-1} X^\top W^{(t)} z^{(t)}
+$$
+
+where $W^{(t)}=\mathrm{diag}(w_i^{(t)})$ and the *working response* is the local linearization $z_i^{(t)} = \eta_i^{(t)} + \big(y_i-\mu_i^{(t)}\big)g'(\mu_i^{(t)})$. Because $\mu_i^{(t)}$, $w_i^{(t)}$, and $z_i^{(t)}$ are all recomputed at the new $\beta$ each round, this is weighted least squares applied repeatedly — hence "iteratively reweighted."
+
+</Proof>
+
+### Worked example: one IRLS step
+
+Take four points for a logistic fit, $x=(-1,-0.3,0.3,1)$, $y=(0,0,1,1)$, starting from $\beta^{(0)}=(0,0)$. At $\beta^{(0)}$, $\eta_i=0$ for every $i$, so $\mu_i=\mathrm{logistic}(0)=0.5$ and $w_i=\mu_i(1-\mu_i)=0.25$ for all four points (equal weights, since $g'(\mu)=1/[\mu(1-\mu)]=4$ at $\mu=0.5$). The working response is
+
+$$
+z_i = \eta_i + (y_i-\mu_i)\,g'(\mu_i) = 0 + (y_i-0.5)\times 4
+$$
+
+giving $z=(-2,-2,2,2)$. Because the weights are equal, $\beta^{(1)}$ is just the OLS fit of $z$ on $x$: with $\bar x=0$ and $\bar z=0$,
+
+$$
+\hat\beta_1^{(1)} = \frac{\sum_i x_i z_i}{\sum_i x_i^2} = \frac{(-1)(-2)+(-0.3)(-2)+(0.3)(2)+(1)(2)}{1+0.09+0.09+1} = \frac{5.2}{2.18} \approx 2.385
+$$
+
+and $\hat\beta_0^{(1)}=0$. So after one IRLS step, $\eta_i^{(1)} \approx 2.385\,x_i$ — already correctly separating the two classes by sign, and IRLS continues refining $w_i$ and $z_i$ at this new $\beta$ until convergence.
+
+## 6. Logistic Regression
+
+Take $y_i\sim\mathrm{Bernoulli}(p_i)$ with the canonical logit link, $\log\frac{p_i}{1-p_i}=x_i^\top\beta$. The log-likelihood is
+
+$$
+\ell(\beta) = \sum_i\Big[y_i\, x_i^\top\beta - \log\big(1+e^{x_i^\top\beta}\big)\Big]
+$$
+
+with score $X^\top(y-p)=0$, solved by IRLS as above. Because $g(\mu)=\log\frac{\mu}{1-\mu}$, $\beta_j$ is the change in log-odds per unit increase in $x_j$, and $e^{\beta_j}$ is the corresponding odds ratio — the standard reason logistic coefficients are reported exponentiated.
+
+## 7. Poisson Regression
+
+Take $y_i\sim\mathrm{Poisson}(\lambda_i)$ with the canonical log link, $\lambda_i = e^{x_i^\top\beta}$. The log-likelihood is $\ell(\beta)=\sum_i\big[y_i\,x_i^\top\beta - e^{x_i^\top\beta} - \log(y_i!)\big]$, with score $X^\top(y-\lambda)=0$. Here $e^{\beta_j}$ is the multiplicative effect on the expected count per unit increase in $x_j$.
+
+### Overdispersion and quasi-likelihood
+
+The Poisson model forces $\mathrm{Var}(y_i)=\lambda_i$ exactly. Trade or claim counts are usually more dispersed than that. A *quasi-likelihood* model keeps the same mean structure and variance function but lets $\mathrm{Var}(y_i)=\phi\,\lambda_i$ for an estimated dispersion $\phi>1$, with
+
+$$
+\hat\phi = \frac{1}{n-p-1}\sum_i \frac{(y_i-\hat\lambda_i)^2}{\hat\lambda_i}
+$$
+
+(the Pearson-based estimate). $\hat\beta$ is unchanged from the ordinary Poisson fit — the score equations don't involve $\phi$ — but every standard error is inflated by $\sqrt{\hat\phi}$, which is the whole point: ignoring overdispersion doesn't bias the coefficients, but it makes every test look more significant than it is. When the extra dispersion itself needs a distributional model (not just a variance correction), the negative binomial distribution replaces Poisson outright.
+
+## 8. Deviance & Model Comparison
+
+The deviance generalizes RSS to the GLM setting: $D = 2\,a(\phi)\big[\ell(y;y)-\ell(y;\hat\mu)\big]$, twice the gap between the saturated model's log-likelihood (a perfect fit) and the fitted model's. For Gaussian data with the identity link, $D=\mathrm{RSS}$ exactly. Comparing nested models via $\Delta D = D_{\text{reduced}}-D_{\text{full}}$ gives an asymptotic $\chi^2_{\Delta\mathrm{df}}$ likelihood-ratio test; for non-nested comparisons, $\mathrm{AIC}=-2\ell(\hat\beta)+2(p+1)$ trades fit against complexity.
+
+## 9. Diagnostics
+
+Raw residuals $y_i-\hat\mu_i$ aren't homoscedastic in a GLM, so two standardized versions are used instead: **Pearson residuals**, $r_i^P=(y_i-\hat\mu_i)/\sqrt{V(\hat\mu_i)}$, and **deviance residuals**, $r_i^D=\mathrm{sign}(y_i-\hat\mu_i)\sqrt{d_i}$, where $d_i$ is observation $i$'s contribution to the total deviance.
+
+<ResidualComparison />
+
+## 10. Code
+
+<CodeBlock lang="R">{`# logistic regression
+fit <- glm(default ~ credit_score + leverage, data = loans,
+            family = binomial(link = "logit"))
+summary(fit)
+exp(coef(fit))   # odds ratios
+
+# poisson regression
+fit_pois <- glm(n_trades ~ volatility + volume, data = trades,
+                 family = poisson(link = "log"))`}</CodeBlock>
+
+<CodeBlock lang="Python">{`import statsmodels.api as sm
+import statsmodels.formula.api as smf
+
+logit_fit = smf.glm("default ~ credit_score + leverage", data=loans,
+                     family=sm.families.Binomial()).fit()
+print(logit_fit.summary())
+
+pois_fit = smf.glm("n_trades ~ volatility + volume", data=trades,
+                    family=sm.families.Poisson()).fit()`}</CodeBlock>
