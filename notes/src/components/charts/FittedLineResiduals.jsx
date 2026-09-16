@@ -67,7 +67,7 @@ export default function FittedLineResiduals() {
         ))}
       </svg>
       <figcaption>
-        Synthetic data (n={N}) with the fitted line &ycirc; = {intercept.toFixed(2)} + {slope.toFixed(2)}x. Dashed segments are residuals, the quantities squared and summed in RSS.
+        Synthetic data (n={N}) with the fitted line ŷ = {intercept.toFixed(2)} + {slope.toFixed(2)}x. Dashed segments are residuals, the quantities squared and summed in RSS.
       </figcaption>
     </figure>
   )
