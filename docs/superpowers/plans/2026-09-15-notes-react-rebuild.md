@@ -944,7 +944,7 @@ git commit -m "Add FittedLineResiduals chart component"
 
 ```jsx
 const DATA = [
-  { y: 0, mu: 0.05 },
+  { y: 1, mu: 0.05 },
   { y: 0, mu: 0.09 },
   { y: 0, mu: 0.14 },
   { y: 1, mu: 0.18 },
@@ -955,7 +955,7 @@ const DATA = [
   { y: 1, mu: 0.63 },
   { y: 1, mu: 0.74 },
   { y: 0, mu: 0.81 },
-  { y: 1, mu: 0.92 },
+  { y: 0, mu: 0.92 },
 ]
 
 function residuals() {
@@ -1009,6 +1009,8 @@ cd ~/ORF405
 git add notes/src/components/charts/ResidualComparison.jsx
 git commit -m "Add ResidualComparison chart component"
 ```
+
+**Known accepted naming quirk:** this component's figcaption reuses the `legend-bias`/`legend-variance` CSS classes (defined in Task 3 for `BiasVarianceCurve`'s bias/variance/MSE legend) to color the words "Pearson" and "deviance." The colors are correct (both resolve to the same `--chart-a`/`--chart-b` tokens used by `chart-point-pearson`/`chart-point-deviance`), but the class names read oddly out of context. Code review flagged this; accepted as-is rather than renaming across the three already-merged chart components for a purely cosmetic class-name mismatch with zero functional impact.
 
 ---
 
